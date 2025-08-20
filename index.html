@@ -17,6 +17,7 @@
   <meta name="twitter:image" content="https://voltedgebuilds.github.io/ttv/social-preview.png">
   <title>TTV - AI Video Generator</title>
   <style>
+    /* Your existing CSS code remains here */
     :root {
       --bg-primary: #0e0f12;
       --bg-secondary: #16181d;
@@ -136,6 +137,8 @@
     const chatEl = document.getElementById("chat");
     const userInput = document.getElementById("userInput");
 
+    const API_URL = "https://ai-backend-xj58.onrender.com"; // Your Render backend URL
+
     function scrollChatToBottom() {
       chatEl.scrollTop = chatEl.scrollHeight;
     }
@@ -143,9 +146,10 @@
     function addMsg(role, content) {
       const d = document.createElement("div");
       d.className = `message ${role === "user" ? "user" : "ai"}`;
-      d.innerHTML = content; // Use innerHTML to support links
+      d.innerHTML = content;
       chatEl.appendChild(d);
       scrollChatToBottom();
+      return d; // Return the created element
     }
 
     userInput.addEventListener("keydown", (e) => {
@@ -160,21 +164,20 @@
       if (!message) return;
       addMsg("user", message);
       userInput.value = "";
-      const aiDiv = document.createElement("div");
-      aiDiv.classList.add("message", "ai");
-      aiDiv.innerText = "Generating video...";
-      chatEl.appendChild(aiDiv);
-      chatEl.scrollTop = chatEl.scrollHeight;
-
+      
+      const aiDiv = addMsg("ai", "Generating video...");
+      
       try {
-        const res = await fetch("https://ai-backend-xj58.onrender.com/generate-video", {
+        const res = await fetch(`${API_URL}/generate-video`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ prompt: message }),
         });
+        
         const data = await res.json();
-        if (data.error) {
-          aiDiv.innerText = `Error: ${data.error}`;
+        
+        if (!res.ok) {
+          aiDiv.innerText = `Error: ${data.error || 'Unknown error'}`;
         } else if (data.videoUrl) {
           aiDiv.innerHTML = `Video generated successfully! <a href="${data.videoUrl}" target="_blank">View Video</a>`;
         } else {
